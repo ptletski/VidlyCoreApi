@@ -63,10 +63,8 @@ namespace VidlyCoreApiApp.ResourceModels
             }
         }
 
-        public int Add(Customer customer)
+        public Customer Add(Customer customer)
         {
-            int customerId = 0;
-            // Verify customer here...
             if (customer == null)
             {
                 throw new ArgumentNullException(nameof(customer));
@@ -88,8 +86,10 @@ namespace VidlyCoreApiApp.ResourceModels
                 // Save customer
                 _dbContext.Customers.Add(customer);
                 _dbContext.SaveChanges();
-                customerId = _dbContext.RetrieveLastAutoIncrementKey(VidlyDbContext.CustomersTable);
 
+                target.CustomerId = _dbContext.RetrieveLastAutoIncrementKey(VidlyDbContext.CustomersTable);
+
+                return target;
             }
             catch (Exception exception)
             {
@@ -98,12 +98,15 @@ namespace VidlyCoreApiApp.ResourceModels
 
                 throw new ResourceAddException(exception.Message);
             }
-
-            return customerId;
         }
 
         public bool Update(Customer customerUpdate)
         {
+            if (customerUpdate == null)
+            {
+                throw new ArgumentNullException(nameof(customerUpdate));
+            }
+
             try
             {
                 bool isUpdated = false; 

@@ -16,6 +16,9 @@ namespace VidlyCoreApiApp.Controllers
     {
         // GET: api/movies
         [HttpGet]
+        [ProducesResponseType(200, Type = typeof(IEnumerable<Movie>))]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
         public ActionResult<IEnumerable<Movie>> Get()
         {
             try
@@ -42,19 +45,22 @@ namespace VidlyCoreApiApp.Controllers
 
         // GET api/movies/5
         [HttpGet("{id}")]
+        [ProducesResponseType(200, Type = typeof(Movie))]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
         public ActionResult<Movie> Get(int id)
         {
             try
             {
                 MovieResourceModel movieResource = new MovieResourceModel();
-                var customer = movieResource.Find(id);
+                var movie = movieResource.Find(id);
 
-                if (customer == null)
+                if (movie == null)
                 {
                     return NotFound();
                 }
 
-                return customer;
+                return movie;
             }
             catch (ResourceFindException)
             {
@@ -68,27 +74,30 @@ namespace VidlyCoreApiApp.Controllers
 
         // POST api/movies
         [HttpPost]
-        public ActionResult<int> Post([FromBody] MovieAndInventory movie)
+        [ProducesResponseType(201, Type = typeof(Movie))]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
+        public IActionResult Post([FromBody] MovieAndInventory movie)
         {
             try
-            {   // Apply validation to Movie via ModelState by default 
+            {   // Apply validation to Customer via ModelState by default 
                 // via ControllerBase.
-                //
+                // 
                 // A ModelState is a collection of name and value pairs 
                 // submitted to the server during a POST request. It also 
                 // contains a collection of error messages for each value. 
                 // The Modelstate represents validation errors in submitted
-                // HTML form values.
-                //
+                // HTML form values. They will result in 400 class result 
+                // codes automatically sent to the client.
                 MovieResourceModel movieResource = new MovieResourceModel();
-                var id = movieResource.Add(movie.Movie, movie.InventoryControlEntry);
+                var target = movieResource.Add(movie.Movie, movie.InventoryControlEntry);
 
-                if (id == 0)
+                if (target == null)
                 {
                     return ValidationProblem();
                 }
 
-                return new CreatedResult("/api/movies", new { Id = id });
+                return new CreatedResult($"{Request.GetRawTarget()}/{target.MovieId}", target);
             }
             catch (ResourceAddException)
             {
@@ -102,7 +111,11 @@ namespace VidlyCoreApiApp.Controllers
 
         // PUT api/movies/5
         [HttpPut("{id}")]
-        public ActionResult Put(int id, [FromBody] Movie movie)
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
+        public IActionResult Put(int id, [FromBody] Movie movie)
         {
             try
             {
@@ -116,6 +129,10 @@ namespace VidlyCoreApiApp.Controllers
 
                 return Ok();
             }
+            catch (ArgumentNullException)
+            {
+                return BadRequest();
+            }
             catch (ResourceUpdateException)
             {
                 return StatusCode(VidlyApiServiceFailure.ServiceFailure);
@@ -128,7 +145,10 @@ namespace VidlyCoreApiApp.Controllers
 
         // DELETE api/movies/5
         [HttpDelete("{id}")]
-        public ActionResult Delete(int id)
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
+        public IActionResult Delete(int id)
         {
             try
             {

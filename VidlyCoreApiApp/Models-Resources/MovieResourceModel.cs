@@ -46,11 +46,11 @@ namespace VidlyCoreApiApp.ResourceModels
 
         public Movie Find(int id)
         {
-            Movie movie = null;
-
             try
             {
-                movie = _dbContext.Movies.Single(m => m.MovieId == id);
+                Movie movie = _dbContext.Movies.Single(m => m.MovieId == id);
+
+                return movie;
             }
             catch (Exception exception)
             {
@@ -59,12 +59,15 @@ namespace VidlyCoreApiApp.ResourceModels
 
                 throw new ResourceFindException(exception.Message);
             }
-
-            return movie;
         }
 
-        public int Add(Movie movie, InventoryControlEntry inventory)
+        public Movie Add(Movie movie, InventoryControlEntry inventory)
         {
+            if (movie == null)
+            {
+                throw new ArgumentNullException(nameof(movie));
+            }
+
             try
             {   // Two transactions. 
                 // First: Create movie with 0 InventoryControlId.
@@ -106,7 +109,7 @@ namespace VidlyCoreApiApp.ResourceModels
 
                 Update(targetMovie);
 
-                return targetMovie.MovieId;
+                return targetMovie;
             }
             catch (Exception exception)
             {
@@ -119,6 +122,11 @@ namespace VidlyCoreApiApp.ResourceModels
 
         public bool Update(Movie movieUpdate)
         {
+            if (movieUpdate == null)
+            {
+                throw new ArgumentNullException(nameof(movieUpdate));
+            }
+
             try
             {
                 bool isUpdated = false;
@@ -175,7 +183,6 @@ namespace VidlyCoreApiApp.ResourceModels
                 {
                     throw new ResourceDeleteException("Failure deleting movie resource. No related Movie item.");
                 }
-
             }
             catch (Exception exception)
             {

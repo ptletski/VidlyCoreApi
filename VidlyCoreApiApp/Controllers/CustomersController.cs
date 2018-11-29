@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using VidlyCoreApiApp.ResourceModels;
 using VidlyCoreApp.Models;
@@ -14,6 +16,9 @@ namespace VidlyCoreApiApp.Controllers
     {
         // GET api/customers
         [HttpGet]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(204)]
+        [ProducesResponseType(500)]
         public ActionResult<IEnumerable<Customer>> Get()
         {
             try
@@ -40,6 +45,9 @@ namespace VidlyCoreApiApp.Controllers
 
         // GET api/customers/5
         [HttpGet("{id}")]
+        [ProducesResponseType(200, Type=typeof(Customer))]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
         public ActionResult<Customer> Get(int id)
         {
             try
@@ -66,7 +74,10 @@ namespace VidlyCoreApiApp.Controllers
 
         // POST api/customers
         [HttpPost]
-        public ActionResult<int> Post([FromBody] Customer customer)
+        [ProducesResponseType(201, Type=typeof(Customer))]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
+        public IActionResult Post([FromBody] Customer customer)
         {
             try
             {   // Apply validation to Customer via ModelState by default 
@@ -76,23 +87,22 @@ namespace VidlyCoreApiApp.Controllers
                 // submitted to the server during a POST request. It also 
                 // contains a collection of error messages for each value. 
                 // The Modelstate represents validation errors in submitted
-                // HTML form values.
-                //
+                // HTML form values. They will result in 400 class result 
+                // codes automatically sent to the client.
                 CustomerResourceModel customerResource = new CustomerResourceModel(); 
-                var id = customerResource.Add(customer);
+                var target = customerResource.Add(customer);
 
-                if (id == 0)
-                {
-                    return ValidationProblem();
-                }
-
-                return new CreatedResult("/api/customers", new { Id = id });
+                return new CreatedResult($"{Request.GetRawTarget()}/{target.CustomerId}", target);
+            }
+            catch (ArgumentNullException)
+            {
+                return BadRequest();
             }
             catch (ResourceAddException)
             {
                 return StatusCode(VidlyApiServiceFailure.ServiceFailure);
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return StatusCode(VidlyApiServiceFailure.ServiceFailure);
             }
@@ -100,7 +110,11 @@ namespace VidlyCoreApiApp.Controllers
 
         // PUT api/customers/5
         [HttpPut("{id}")]
-        public ActionResult Put(int id, [FromBody] Customer customer)
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
+        public IActionResult Put(int id, [FromBody] Customer customer)
         {
             try
             {
@@ -114,7 +128,11 @@ namespace VidlyCoreApiApp.Controllers
 
                 return Ok();
             }
-            catch(ResourceUpdateException)
+            catch (ArgumentNullException)
+            {
+                return BadRequest();
+            }
+            catch (ResourceUpdateException)
             {
                 return StatusCode(VidlyApiServiceFailure.ServiceFailure);
             }
@@ -126,7 +144,10 @@ namespace VidlyCoreApiApp.Controllers
 
         // DELETE api/customers/5
         [HttpDelete("{id}")]
-        public ActionResult Delete(int id)
+        [ProducesResponseType(200)]
+        [ProducesResponseType(404)]
+        [ProducesResponseType(500)]
+        public IActionResult Delete(int id)
         {
             try
             {
